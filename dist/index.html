@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Compare alternativas de compra por uma árvore de decisão e calcule o lucro esperado para os cenários de sol e chuva.">
+  <title>Árvore de decisão | Comparador de compras</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231b3558'/%3E%3Cpath d='M17 32h14m0 0 12-13M31 32l12 13' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='47' cy='19' r='5' fill='%235dc7aa'/%3E%3Ccircle cx='47' cy='45' r='5' fill='%235dc7aa'/%3E%3C/svg%3E">
+  <style>
+    :root { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #213248; background: #f3f6f8; font-size: 16px; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    main { max-width: 1180px; margin: auto; padding: 30px 24px 64px; }
+    header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    h1 { font-size: clamp(1.7rem, 3vw, 2.25rem); line-height: 1.15; margin: 0 0 6px; letter-spacing: -.035em; }
+    h2 { font-size: 1.22rem; margin: 0 0 5px; letter-spacing: -.015em; }
+    p { margin: 0; line-height: 1.5; }
+    .muted { color: #56697e; }
+    .intro { max-width: 690px; }
+    .eyebrow { display: block; color: #286384; font-size: .82rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
+    .panel { background: #fff; border: 1px solid #dbe4eb; border-radius: 16px; box-shadow: 0 2px 8px rgba(25,53,80,.035); }
+    .controls { padding: 24px; }
+    .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .probability-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 180px)) 1fr; gap: 12px; align-items: end; margin-bottom: 24px; }
+    label { display: block; font-weight: 650; font-size: .9rem; }
+    label span { display: block; margin-bottom: 7px; }
+    .field { display: flex; align-items: center; border: 1px solid #c9d5df; border-radius: 9px; background: #fff; min-width: 0; }
+    .field:focus-within { border-color: #2b6599; outline: 3px solid #dcebf8; }
+    .field input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #172e48; padding: 10px 11px; border-radius: 9px; }
+    .field .suffix { color: #596c80; padding: 0 11px 0 2px; font-weight: 500; margin: 0; }
+    .hint { padding-bottom: 10px; font-size: .88rem; color: #56697e; }
+    .options-head, .option-row { display: grid; grid-template-columns: minmax(140px, 1.35fr) repeat(3, minmax(115px, 1fr)) 42px; gap: 12px; align-items: end; }
+    .options-head { padding: 0 0 8px; color: #56697e; font-size: .8rem; font-weight: 700; }
+    .option-row { padding: 12px 0; border-top: 1px solid #e5ecf1; }
+    .option-row label > span:first-child { display: none; }
+    .option-row input { font-variant-numeric: tabular-nums; }
+    .icon-button { border: 1px solid #d7e0e7; background: #fff; color: #73505a; border-radius: 9px; height: 43px; width: 42px; font-size: 1.4rem; line-height: 1; }
+    .icon-button:hover:not(:disabled) { background: #fbf0f1; border-color: #dea9ad; }
+    .icon-button:disabled { opacity: .45; cursor: not-allowed; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 17px; }
+    .button { border-radius: 9px; padding: 10px 15px; font-weight: 700; border: 1px solid #1b3558; background: #1b3558; color: #fff; }
+    .button:hover { background: #2b4e76; }
+    .button.secondary { background: #fff; color: #1b3558; border-color: #c9d5df; }
+    .button.secondary:hover { background: #f4f7fa; }
+    .result { margin-top: 20px; padding: 22px 24px; border-color: #a9dace; background: #f2fbf8; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px 22px; }
+    .result strong { color: #145344; font-size: clamp(1.45rem, 3vw, 2rem); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .result .calculation { grid-column: 1 / -1; color: #3f665b; font-size: .9rem; }
+    .result.invalid { display: block; border-color: #e4b7a3; background: #fff7f2; color: #8c3b23; }
+    .tree-panel { margin-top: 20px; padding: 24px; }
+    .tree-heading { margin-bottom: 17px; }
+    .tree-list { display: grid; gap: 12px; }
+    .tree-row { display: grid; grid-template-columns: minmax(185px, 230px) 1fr; border: 1px solid #dce5ed; border-radius: 12px; overflow: hidden; }
+    .tree-row.best { border-color: #71bea8; box-shadow: inset 4px 0 #25896d; }
+    .decision { position: relative; background: #f6f9fb; padding: 15px 19px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+    .decision::after { content: ''; position: absolute; width: 13px; border-top: 2px solid #9ab0c2; right: -13px; top: 50%; z-index: 1; }
+    .decision strong { overflow-wrap: anywhere; }
+    .decision small { color: #586a7d; font-size: .85rem; }
+    .decision .expected { font-weight: 750; color: #1b3558; font-variant-numeric: tabular-nums; }
+    .decision .best-tag { color: #17694f; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+    .branches { position: relative; border-left: 1px solid #dce5ed; padding-left: 24px; }
+    .branches::before { content: ''; position: absolute; left: 12px; top: 25%; bottom: 25%; border-left: 2px solid #9ab0c2; }
+    .branch { position: relative; display: grid; grid-template-columns: minmax(105px, .8fr) repeat(3, minmax(75px, .7fr)); align-items: center; gap: 12px; padding: 12px 16px; font-variant-numeric: tabular-nums; }
+    .branch::before { content: ''; position: absolute; left: -12px; top: 50%; width: 12px; border-top: 2px solid #9ab0c2; }
+    .branch + .branch { border-top: 1px solid #e7edf2; }
+    .branch .weather { font-weight: 700; }
+    .branch .weather small { display: block; color: #627487; font-weight: 500; font-size: .83rem; }
+    .branch .figure small { display: block; color: #66788a; font-size: .75rem; }
+    .profit-positive { color: #17694f; font-weight: 750; }
+    .profit-negative { color: #b34336; font-weight: 750; }
+    .profit-zero { color: #485a6d; font-weight: 750; }
+    .note { margin-top: 17px; color: #56697e; font-size: .9rem; }
+    input:focus-visible, button:focus-visible { outline: 3px solid #78b3e2; outline-offset: 2px; }
+    @media (max-width: 760px) {
+      main { padding: 22px 14px 48px; }
+      header { align-items: flex-start; }
+      .controls, .tree-panel { padding: 18px; }
+      .probability-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hint { grid-column: 1 / -1; padding: 0; }
+      .options-head { display: none; }
+      .option-row { grid-template-columns: repeat(2, minmax(0, 1fr)) 42px; gap: 12px; align-items: end; }
+      .option-row label:first-child { grid-column: 1 / -1; }
+      .option-row label:nth-child(4) { grid-column: 1 / 3; }
+      .option-row label > span:first-child { display: block; }
+      .option-row .icon-button { grid-column: 3; grid-row: 3; }
+      .result { grid-template-columns: 1fr; }
+      .result strong { white-space: normal; }
+      .tree-row { grid-template-columns: 1fr; }
+      .branches { border-left: 0; border-top: 1px solid #dce5ed; padding-left: 0; }
+      .branches::before, .branch::before, .decision::after { display: none; }
+      .branch { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 12px; font-size: .85rem; }
+      .branch .figure small { font-size: .7rem; }
+    }
+    @media (max-width: 380px) { .branch { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 10px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <span class="eyebrow">Análise de decisão</span>
+        <h1>Árvore de decisão</h1>
+        <p class="muted">Compare quanto cada compra pode render em dias de sol e de chuva.</p>
+      </div>
+    </header>
+
+    <section class="panel controls" aria-labelledby="inputs-title">
+      <div class="section-heading">
+        <div><h2 id="inputs-title">Dados do problema</h2><p class="muted">Altere os valores do exemplo da aula.</p></div>
+      </div>
+      <div class="probability-grid">
+        <label><span>Chance de sol</span><span class="field"><input id="sun" type="number" min="0" max="100" step="any" inputmode="decimal" value="60"><span class="suffix">%</span></span></label>
+        <label><span>Chance de chuva</span><span class="field"><input id="rain" type="number" min="0" max="100" step="any" inputmode="decimal" value="40"><span class="suffix">%</span></span></label>
+        <p class="hint">As duas chances devem somar 100%.</p>
+      </div>
+      <div class="options-head" aria-hidden="true"><span>Alternativa</span><span>Custo (R$)</span><span>Receita no sol (R$)</span><span>Receita na chuva (R$)</span><span></span></div>
+      <div id="options"></div>
+      <div class="actions">
+        <button class="button" id="add" type="button">Adicionar alternativa</button>
+        <button class="button secondary" id="reset" type="button">Restaurar exemplo</button>
+      </div>
+    </section>
+
+    <section class="panel result" id="result" aria-live="polite"></section>
+
+    <section class="panel tree-panel" aria-labelledby="tree-title">
+      <div class="tree-heading"><h2 id="tree-title">Resultado por alternativa</h2><p class="muted">Lucro = receita − custo. Valor esperado = soma dos lucros ponderados pelas chances.</p></div>
+      <div class="tree-list" id="tree"></div>
+      <p class="note">O maior valor esperado indica a opção mais vantajosa em média, considerando as chances informadas.</p>
+    </section>
+  </main>
+  <script>
+    const example = [
+      { name: 'Compra 20 kg', cost: 70, sunRevenue: 98, rainRevenue: 98 },
+      { name: 'Compra 40 kg', cost: 140, sunRevenue: 196, rainRevenue: 140 },
+      { name: 'Compra 60 kg', cost: 210, sunRevenue: 294, rainRevenue: 140 },
+      { name: 'Compra 80 kg', cost: 280, sunRevenue: 350, rainRevenue: 140 }
+    ];
+    let options = example.map(item => ({ ...item }));
+    const optionContainer = document.getElementById('options');
+    const result = document.getElementById('result');
+    const tree = document.getElementById('tree');
+    const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+    const percent = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    }
+
+    function renderInputs() {
+      optionContainer.innerHTML = options.map((item, index) => `
+        <div class="option-row">
+          <label><span>Alternativa ${index + 1}</span><span class="field"><input data-index="${index}" data-key="name" aria-label="Nome da alternativa ${index + 1}" value="${escapeHtml(item.name)}" maxlength="60"></span></label>
+          <label><span>Custo (R$)</span><span class="field"><input data-index="${index}" data-key="cost" aria-label="Custo da alternativa ${index + 1}" type="number" min="0" step="any" inputmode="decimal" value="${item.cost}"></span></label>
+          <label><span>Receita no sol (R$)</span><span class="field"><input data-index="${index}" data-key="sunRevenue" aria-label="Receita no sol da alternativa ${index + 1}" type="number" min="0" step="any" inputmode="decimal" value="${item.sunRevenue}"></span></label>
+          <label><span>Receita na chuva (R$)</span><span class="field"><input data-index="${index}" data-key="rainRevenue" aria-label="Receita na chuva da alternativa ${index + 1}" type="number" min="0" step="any" inputmode="decimal" value="${item.rainRevenue}"></span></label>
+          <button type="button" class="icon-button" data-remove="${index}" aria-label="Remover alternativa ${index + 1}" title="Remover alternativa" ${options.length === 1 ? 'disabled' : ''}>×</button>
+        </div>`).join('');
+    }
+
+    function readNumber(input) {
+      return input.value.trim() === '' ? NaN : Number(input.value);
+    }
+
+    function getProbabilities() {
+      return { sun: readNumber(document.getElementById('sun')), rain: readNumber(document.getElementById('rain')) };
+    }
+
+    function errorMessage(sun, rain) {
+      if (!Number.isFinite(sun) || !Number.isFinite(rain) || sun < 0 || rain < 0 || sun > 100 || rain > 100 || Math.abs(sun + rain - 100) > 0.000001) {
+        return 'Informe probabilidades entre 0% e 100% que somem 100%.';
+      }
+      if (options.some(item => !item.name.trim())) return 'Preencha o nome de cada alternativa.';
+      if (options.some(item => [item.cost, item.sunRevenue, item.rainRevenue].some(value => !Number.isFinite(value) || value < 0))) {
+        return 'Preencha custo e receitas com valores iguais ou maiores que zero.';
+      }
+      return '';
+    }
+
+    function calculate(sun, rain) {
+      return options.map(item => {
+        const sunProfit = item.sunRevenue - item.cost;
+        const rainProfit = item.rainRevenue - item.cost;
+        return { ...item, sunProfit, rainProfit, expected: (sunProfit * sun + rainProfit * rain) / 100 };
+      });
+    }
+
+    function profitClass(value) { return value > 0 ? 'profit-positive' : value < 0 ? 'profit-negative' : 'profit-zero'; }
+
+    function render() {
+      const { sun, rain } = getProbabilities();
+      const error = errorMessage(sun, rain);
+      result.classList.toggle('invalid', Boolean(error));
+      if (error) {
+        result.textContent = error;
+        tree.replaceChildren();
+        return;
+      }
+
+      const rows = calculate(sun, rain);
+      const highest = Math.max(...rows.map(row => row.expected));
+      const winners = rows.filter(row => Math.abs(row.expected - highest) < 0.000001);
+      const first = winners[0];
+      const names = winners.map(row => row.name).join(', ');
+      result.innerHTML = `
+        <div><span class="eyebrow">${winners.length === 1 ? 'Melhor alternativa' : 'Alternativas empatadas'}</span><h2>${escapeHtml(names)}</h2><p class="muted">Maior lucro esperado</p></div>
+        <strong>${money.format(highest)}</strong>
+        <p class="calculation">${winners.length === 1 ? `${money.format(first.sunProfit)} × ${percent.format(sun)}% + ${money.format(first.rainProfit)} × ${percent.format(rain)}% = ${money.format(highest)}` : 'As alternativas destacadas têm o mesmo valor esperado.'}</p>`;
+
+      tree.innerHTML = rows.map(row => {
+        const best = Math.abs(row.expected - highest) < 0.000001;
+        return `<article class="tree-row ${best ? 'best' : ''}">
+          <div class="decision">${best ? '<span class="best-tag">Melhor escolha</span>' : ''}<strong>${escapeHtml(row.name)}</strong><small>Custo: ${money.format(row.cost)}</small><span class="expected">Esperado: ${money.format(row.expected)}</span></div>
+          <div class="branches">
+            <div class="branch"><span class="weather">Sol <small>${percent.format(sun)}% de chance</small></span><span class="figure"><small>Custo</small>${money.format(row.cost)}</span><span class="figure"><small>Receita</small>${money.format(row.sunRevenue)}</span><span class="figure ${profitClass(row.sunProfit)}"><small>Lucro</small>${money.format(row.sunProfit)}</span></div>
+            <div class="branch"><span class="weather">Chuva <small>${percent.format(rain)}% de chance</small></span><span class="figure"><small>Custo</small>${money.format(row.cost)}</span><span class="figure"><small>Receita</small>${money.format(row.rainRevenue)}</span><span class="figure ${profitClass(row.rainProfit)}"><small>Lucro</small>${money.format(row.rainProfit)}</span></div>
+          </div>
+        </article>`;
+      }).join('');
+    }
+
+    optionContainer.addEventListener('input', event => {
+      const input = event.target.closest('input[data-key]');
+      if (!input) return;
+      const index = Number(input.dataset.index);
+      options[index][input.dataset.key] = input.dataset.key === 'name' ? input.value : readNumber(input);
+      render();
+    });
+    optionContainer.addEventListener('click', event => {
+      const button = event.target.closest('button[data-remove]');
+      if (!button || options.length === 1) return;
+      options.splice(Number(button.dataset.remove), 1);
+      renderInputs();
+      render();
+    });
+    document.getElementById('sun').addEventListener('input', render);
+    document.getElementById('rain').addEventListener('input', render);
+    document.getElementById('add').addEventListener('click', () => {
+      options.push({ name: `Compra ${options.length + 1}`, cost: 0, sunRevenue: 0, rainRevenue: 0 });
+      renderInputs();
+      render();
+      optionContainer.lastElementChild.querySelector('input').focus();
+    });
+    document.getElementById('reset').addEventListener('click', () => {
+      options = example.map(item => ({ ...item }));
+      document.getElementById('sun').value = 60;
+      document.getElementById('rain').value = 40;
+      renderInputs();
+      render();
+    });
+
+    // A mesma ação de preencher a tela pode ser chamada por navegadores com suporte a WebMCP.
+    if (document.modelContext?.registerTool) {
+      const lifecycle = new AbortController();
+      window.addEventListener('pagehide', () => lifecycle.abort(), { once: true });
+      try {
+        Promise.resolve(document.modelContext.registerTool({
+          name: 'set_decision_data',
+          title: 'Preencher dados da árvore de decisão',
+          description: 'Define as probabilidades e alternativas, atualiza a árvore visível e retorna a melhor escolha.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              sunProbability: { type: 'number', minimum: 0, maximum: 100 },
+              rainProbability: { type: 'number', minimum: 0, maximum: 100 },
+              options: { type: 'array', minItems: 1, items: { type: 'object', properties: {
+                name: { type: 'string', minLength: 1, maxLength: 60 }, cost: { type: 'number', minimum: 0 },
+                sunRevenue: { type: 'number', minimum: 0 }, rainRevenue: { type: 'number', minimum: 0 }
+              }, required: ['name', 'cost', 'sunRevenue', 'rainRevenue'], additionalProperties: false } }
+            }, required: ['sunProbability', 'rainProbability', 'options'], additionalProperties: false
+          },
+          annotations: { readOnlyHint: false, untrustedContentHint: false },
+          execute(input) {
+            if (!input || !Array.isArray(input.options) || input.options.length < 1 ||
+                !Number.isFinite(input.sunProbability) || !Number.isFinite(input.rainProbability) ||
+                input.sunProbability < 0 || input.rainProbability < 0 || input.sunProbability > 100 || input.rainProbability > 100 ||
+                Math.abs(input.sunProbability + input.rainProbability - 100) > 0.000001 ||
+                input.options.some(item => !item || typeof item.name !== 'string' || !item.name.trim() || item.name.length > 60 ||
+                  [item.cost, item.sunRevenue, item.rainRevenue].some(value => !Number.isFinite(value) || value < 0))) {
+              throw new Error('Dados inválidos: informe nomes, valores não negativos e probabilidades que somem 100%.');
+            }
+            options = input.options.map(item => ({ ...item }));
+            document.getElementById('sun').value = input.sunProbability;
+            document.getElementById('rain').value = input.rainProbability;
+            renderInputs();
+            render();
+            const calculated = calculate(input.sunProbability, input.rainProbability);
+            const highest = Math.max(...calculated.map(item => item.expected));
+            return { bestOptions: calculated.filter(item => Math.abs(item.expected - highest) < 0.000001).map(item => item.name), expectedProfit: highest };
+          }
+        }, { signal: lifecycle.signal })).catch(() => {});
+      } catch (_) { /* O formulário continua disponível em navegadores sem esse recurso. */ }
+    }
+
+    renderInputs();
+    render();
+  </script>
+</body>
+</html>
