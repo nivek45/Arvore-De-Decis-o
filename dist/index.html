@@ -250,7 +250,7 @@
       render();
     });
 
-    // A mesma ação de preencher a tela pode ser chamada por navegadores com suporte a WebMCP.
+    
     if (document.modelContext?.registerTool) {
       const lifecycle = new AbortController();
       window.addEventListener('pagehide', () => lifecycle.abort(), { once: true });
@@ -290,7 +290,7 @@
             return { bestOptions: calculated.filter(item => Math.abs(item.expected - highest) < 0.000001).map(item => item.name), expectedProfit: highest };
           }
         }, { signal: lifecycle.signal })).catch(() => {});
-      } catch (_) { /* O formulário continua disponível em navegadores sem esse recurso. */ }
+      } catch (_) { }
     }
 
     renderInputs();
